@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестовое для Дельта</title>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Тестовое для Дельта</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+            }
+    
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+    
+            thead tr {
+                background-color: #f3f3f3;
+            }
+    
+            th, td {
+                padding: 10px;
+                text-align: left;
+                border: 1px solid #ddd;
+            }
+    
+            tr.selected {
+                background-color: #e0f7fa;
+            }
+    
+            td.negative {
+                color: red;
+            }
+    
+            td.positive {
+                color: green;
+            }
+    
+            td.current-day {
+                background-color: #e0f7fa;
+            }
+    
+            td.percent-change {
+                font-weight: bold;
+                font-size: 20px;
+            }
+    
+            .chart-container {
+                padding: 10px;
+                border: 1px solid #ddd;
+                background-color: #f9f9f9;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Показатель</th>
+                        <th>Текущий день</th>
+                        <th>Вчера</th>
+                        <th>Этот день недели</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template v-for="(row, index) in tableData">
+                        <tr :key="index" @click="selectRow(index)" :class="{selected: selectedIndex === index}">
+                            <td>{{ row.label }}</td>
+                            <td class="current-day">{{ row.current }}</td>
+                            <td :class="{'negative': getPercentageChange(row.current, row.yesterday) < 0, 'positive': getPercentageChange(row.current, row.yesterday) >= 0}">
+                                {{ row.yesterday }} 
+                                <span class="percent-change">{{ getPercentageChange(row.current, row.yesterday) }}%</span>
+                            </td>
+                            <td :class="{'negative': getPercentageChange(row.current, row.weekDay) < 0, 'positive': getPercentageChange(row.current, row.weekDay) >= 0}">
+                                {{ row.weekDay }}
+                                <span class="percent-change">{{ getPercentageChange(row.current, row.weekDay) }}%</span>
+                            </td>
+                        </tr>
+                        <!-- Вставляем строку для графика сразу под выбранной строкой -->
+                        <tr v-if="selectedIndex === index">
+                            <td colspan="4">
+                                <div class="chart-container">
+                                    <highcharts :options="chartOptions"></highcharts>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highcharts-vue@1.3.5/dist/highcharts-vue.min.js"></script>
+
+    <script>
+        Vue.use(HighchartsVue.default);
+
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    tableData: [
+                        { label: 'Выручка, руб', current: 500521, yesterday: 480521, weekDay: 4805121 },
+                        { label: 'Наличные', current: 300000, yesterday: 300000, weekDay: 300000 },
+                        { label: 'Безналичный расчет', current: 100000, yesterday: 100000, weekDay: 100000 },
+                        { label: 'Кредитные карты', current: 100521, yesterday: 100521, weekDay: 100521 },
+                        { label: 'Средний чек, руб', current: 1300, yesterday: 900, weekDay: 900 },
+                        { label: 'Средний гость, руб', current: 1200, yesterday: 800, weekDay: 800 },
+                        { label: 'Удаления из чека (после оплаты), руб', current: 1000, yesterday: 1100, weekDay: 900 },
+                        { label: 'Удаления из чека (до оплаты), руб', current: 1300, yesterday: 1300, weekDay: 900 },
+                        { label: 'Количество чеков', current: 34, yesterday: 36, weekDay: 34 },
+                        { label: 'Количество гостей', current: 34, yesterday: 36, weekDay: 32 },
+                    ],
+                    selectedIndex: null,
+                    selectedRow: null,
+                    chartOptions: null,
+                };
+            },
+            methods: {
+                selectRow(index) {
+                    if (this.selectedIndex === index) {
+                        this.selectedIndex = null; // Закрыть график, если строка уже выбрана
+                    } else {
+                        this.selectedIndex = index;
+                        this.selectedRow = this.tableData[index];
+                        this.updateChart();
+                    }
+                },
+                getPercentageChange(current, yesterday) {
+                    return (((current - yesterday) / yesterday) * 100).toFixed(2);
+                },
+                updateChart() {
+                    this.chartOptions = {
+                        chart: {
+                            type: 'line'
+                        },
+                        title: {
+                            text: this.selectedRow.label
+                        },
+                        xAxis: {
+                            categories: ['Вчера', 'Сегодня']
+                        },
+                        yAxis: {
+                            title: {
+                                text: 'Значение'
+                            }
+                        },
+                        series: [{
+                            name: this.selectedRow.label,
+                            data: [this.selectedRow.yesterday, this.selectedRow.current]
+                        }]
+                    };
+                }
+            }
+        });
+    </script>
+</body>
+</html>
